@@ -1,349 +1,295 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Selector y Paleta de Colores</title>
-<style>
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f4f7fa;
-    margin: 20px;
-    color: #333;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  h1 {
-    color: #2c3e50;
-  }
-  #instructions {
-    max-width: 600px;
-    background: #e8f0fe;
-    border: 1px solid #a8c0ff;
-    border-radius: 8px;
-    padding: 15px 20px;
-    margin-bottom: 25px;
-    font-size: 1rem;
-    line-height: 1.4;
-  }
-  #upload-label {
-    cursor: pointer;
-    background: #4a90e2;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 30px;
-    font-weight: 600;
-    transition: background 0.3s ease;
-    display: inline-block;
-    margin-bottom: 25px;
-  }
-  #upload-label:hover {
-    background: #357ABD;
-  }
-  #upload {
-    display: none;
-  }
-  #container {
-    display: flex;
-    gap: 40px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  #image-container {
-    position: relative;
-    max-width: 500px;
-    max-height: 500px;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.1);
-    border-radius: 12px;
-    overflow: hidden;
-    cursor: crosshair;
-    background: white;
-  }
-  #canvas {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-  #color-info {
-    max-width: 300px;
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.1);
-  }
-  #picked-color {
-    width: 100%;
-    height: 80px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    border: 2px solid #ccc;
-  }
-  .color-code {
-    font-family: monospace;
-    font-size: 1.1rem;
-    margin: 5px 0;
-  }
-  #palette {
-    display: flex;
-    gap: 12px;
-    margin-top: 10px;
-    flex-wrap: wrap;
-  }
-  .palette-color {
-    width: 50px;
-    height: 50px;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    border: 2px solid #fff;
-    cursor: default;
-  }
-  .palette-color:hover {
-    border-color: #4a90e2;
-  }
-  footer {
-    margin-top: 40px;
-    font-size: 0.85rem;
-    color: #777;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <title>Selector de Color desde Imagen</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(145deg, #f0f2f5, #ffffff);
+      color: #333;
+      margin: 0;
+      padding: 30px;
+    }
+    h1, h3 {
+      color: #2c3e50;
+    }
+    input[type="file"] {
+      padding: 10px 15px;
+      background-color: #2c3e50;
+      border: none;
+      color: #fff;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    input[type="file"]:hover {
+      background-color: #1a252f;
+    }
+    #canvasWrapper {
+      margin-top: 30px;
+      max-width: 500px;
+    }
+    canvas {
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background: #fff;
+      display: block;
+      max-width: 100%;
+      height: auto;
+      cursor: crosshair;
+    }
+    /* Contenedor de columnas para info, paleta y combinaciones */
+    #infoContainer {
+      display: flex;
+      gap: 30px;
+      margin-top: 40px;
+      flex-wrap: wrap;
+    }
+    .info, .palette, .harmonies {
+      flex: 1 1 200px;
+      padding: 20px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      min-width: 200px;
+    }
+    .color-container {
+      display: inline-block;
+      margin: 8px;
+      text-align: center;
+      font-size: 13px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .color-container:hover {
+      transform: scale(1.05);
+    }
+    .color-box {
+      width: 50px;
+      height: 50px;
+      border: 2px solid #ffffff;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .copiable {
+      background: #f0f0f0;
+      padding: 3px 8px;
+      border-radius: 5px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      display: inline-block;
+      user-select: all;
+    }
+    .copiable:hover {
+      background: #e0e0e0;
+    }
+    #colorHex, #colorRGB, #colorHSL {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    /* Modal zoom window styles */
+    #zoomModal {
+      position: fixed;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 2px solid #2c3e50;
+      border-radius: 12px;
+      width: 180px;
+      height: 180px;
+      background: white;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 1000;
+    }
+    #zoomCanvas {
+      width: 180px;
+      height: 180px;
+      border-radius: 12px;
+      display: block;
+    }
+  </style>
 </head>
 <body>
+  <h1>Selector de Color desde una Imagen</h1>
+  <p>Sube una imagen, mueve el cursor para ver zoom, haz clic para seleccionar un color y obtener su información.</p>
+  <input type="file" id="upload" accept="image/*" />
 
-<h1>Selector y Paleta de Colores</h1>
-
-<div id="instructions">
-  <strong>Instrucciones:</strong>
-  <ol>
-    <li>Haz clic en "Subir imagen" y selecciona una imagen desde tu dispositivo.</li>
-    <li>La imagen aparecerá abajo. Haz clic sobre cualquier parte de la imagen para obtener el color exacto de ese punto.</li>
-    <li>Verás el código de color en formatos HEX, RGB y HSL, junto con una muestra visual.</li>
-    <li>Debajo, se muestra la paleta con los 5 colores principales extraídos automáticamente de la imagen.</li>
-  </ol>
-</div>
-
-<label id="upload-label" for="upload">Subir imagen</label>
-<input type="file" id="upload" accept="image/*" />
-
-<div id="container">
-  <div id="image-container" style="display:none;">
+  <div id="canvasWrapper">
     <canvas id="canvas"></canvas>
-    <img id="image" alt="Imagen subida" style="display:none;" crossorigin="anonymous" />
   </div>
-  
-  <div id="color-info" style="display:none;">
-    <div id="picked-color"></div>
-    <div class="color-code" id="hex"></div>
-    <div class="color-code" id="rgb"></div>
-    <div class="color-code" id="hsl"></div>
-    <h3>Paleta principal</h3>
-    <div id="palette"></div>
+
+  <div id="zoomModal">
+    <canvas id="zoomCanvas" width="180" height="180"></canvas>
   </div>
-</div>
 
-<footer>
-  &copy; 2025 - Herramienta de selección de color
-</footer>
+  <div id="infoContainer">
+    <div class="info">
+      <p id="colorHex">HEX:</p>
+      <p id="colorRGB">RGB:</p>
+      <p id="colorHSL">HSL:</p>
+    </div>
 
-<script>
-// Variables globales
-const uploadInput = document.getElementById('upload');
-const imageContainer = document.getElementById('image-container');
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-const imageElement = document.getElementById('image');
-const colorInfo = document.getElementById('color-info');
-const pickedColorDiv = document.getElementById('picked-color');
-const hexText = document.getElementById('hex');
-const rgbText = document.getElementById('rgb');
-const hslText = document.getElementById('hsl');
-const paletteDiv = document.getElementById('palette');
+    <div class="palette">
+      <h3>Paleta principal:</h3>
+      <div id="paletteColors"></div>
+    </div>
 
-uploadInput.addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
+    <div class="harmonies">
+      <h3>Combinaciones de color:</h3>
+      <div id="comboColors"></div>
+    </div>
+  </div>
 
-  const reader = new FileReader();
-  reader.onload = function(event) {
-    imageElement.src = event.target.result;
-    imageElement.onload = () => {
-      // Tamaño natural de la imagen
-      const naturalWidth = imageElement.naturalWidth;
-      const naturalHeight = imageElement.naturalHeight;
+  <script>
+    const upload = document.getElementById('upload');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const zoomModal = document.getElementById('zoomModal');
+    const zoomCanvas = document.getElementById('zoomCanvas');
+    const zoomCtx = zoomCanvas.getContext('2d');
+    const colorHex = document.getElementById('colorHex');
+    const colorRGB = document.getElementById('colorRGB');
+    const colorHSL = document.getElementById('colorHSL');
+    const paletteColors = document.getElementById('paletteColors');
+    const comboColors = document.getElementById('comboColors');
 
-      // Máximo ancho visible
-      const maxDisplayWidth = 500;
+    let img = new Image();
 
-      // Calculamos escala para que se ajuste al max ancho sin perder proporción
-      let displayWidth = naturalWidth;
-      let displayHeight = naturalHeight;
+    upload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        img.onload = () => {
+          canvas.width = img.width > 500 ? 500 : img.width;
+          canvas.height = img.height * (canvas.width / img.width);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          extractPalette();
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
 
-      if (naturalWidth > maxDisplayWidth) {
-        displayWidth = maxDisplayWidth;
-        displayHeight = (naturalHeight / naturalWidth) * maxDisplayWidth;
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      zoomModal.style.display = 'block';
+
+      const zoomSize = 20;
+
+      let sx = Math.min(Math.max(0, x - zoomSize/2), canvas.width - zoomSize);
+      let sy = Math.min(Math.max(0, y - zoomSize/2), canvas.height - zoomSize);
+
+      zoomCtx.clearRect(0, 0, zoomCanvas.width, zoomCanvas.height);
+      zoomCtx.imageSmoothingEnabled = false;
+      zoomCtx.drawImage(canvas, sx, sy, zoomSize, zoomSize, 0, 0, zoomCanvas.width, zoomCanvas.height);
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      zoomModal.style.display = 'none';
+    });
+
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const pixel = ctx.getImageData(x, y, 1, 1).data;
+      const rgb = `rgb(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`;
+      const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+      const hsl = rgbToHsl(pixel[0], pixel[1], pixel[2]);
+
+      colorHex.innerHTML = `HEX: <span class='copiable' tabindex='0' title='Haz clic para copiar'>${hex}</span>`;
+      colorRGB.innerHTML = `RGB: <span class='copiable' tabindex='0' title='Haz clic para copiar'>${rgb}</span>`;
+      colorHSL.innerHTML = `HSL: <span class='copiable' tabindex='0' title='Haz clic para copiar'>${hsl}</span>`;
+
+      generateCombinations(pixel[0], pixel[1], pixel[2]);
+      addCopyListeners();
+    });
+
+    function rgbToHex(r, g, b) {
+      return "#" + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+    }
+
+    function rgbToHsl(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      let max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+      if (max == min) {
+        h = s = 0;
+      } else {
+        let d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch(max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
       }
-
-      // Ajustar canvas tamaño interno a la imagen real
-      canvas.width = naturalWidth;
-      canvas.height = naturalHeight;
-
-      // Ajustar tamaño CSS para que se vea escalada en el contenedor
-      canvas.style.width = displayWidth + 'px';
-      canvas.style.height = displayHeight + 'px';
-
-      // Mostrar contenedor
-      imageContainer.style.display = 'block';
-      colorInfo.style.display = 'block';
-
-      // Dibujar imagen en canvas en tamaño real
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(imageElement, 0, 0);
-
-      // Extraer paleta
-      const palette = getDominantColors(ctx, canvas.width, canvas.height, 5);
-      renderPalette(palette);
-
-      // No mostrar el <img>
-      imageElement.style.display = 'none';
-    };
-  };
-  reader.readAsDataURL(file);
-});
-
-// Ajustar posición clic para considerar el escalado del canvas
-canvas.addEventListener('click', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  // Coordenadas relativas en el canvas visible
-  const x_display = e.clientX - rect.left;
-  const y_display = e.clientY - rect.top;
-
-  // Relación de escala entre canvas real y mostrado
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-
-  // Coordenadas reales en la imagen original
-  const x = Math.floor(x_display * scaleX);
-  const y = Math.floor(y_display * scaleY);
-
-  const pixel = ctx.getImageData(x, y, 1, 1).data;
-  const [r, g, b, a] = pixel;
-
-  if(a === 0) {
-    alert("El píxel es transparente. Selecciona otra área.");
-    return;
-  }
-
-  const hex = rgbToHex(r, g, b);
-  const rgb = `rgb(${r}, ${g}, ${b})`;
-  const hsl = rgbToHsl(r, g, b);
-
-  pickedColorDiv.style.backgroundColor = hex;
-  hexText.textContent = `HEX: ${hex}`;
-  rgbText.textContent = `RGB: ${rgb}`;
-  hslText.textContent = `HSL: ${hsl}`;
-});
-
-// Función para convertir RGB a HEX
-function rgbToHex(r, g, b) {
-  return "#" + [r, g, b].map(x => {
-    const hex = x.toString(16);
-    return hex.length === 1 ? "0" + hex : hex;
-  }).join('');
-}
-
-// Función para convertir RGB a HSL
-function rgbToHsl(r, g, b) {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h, s, l = (max + min) / 2;
-
-  if(max === min) h = s = 0; // gris
-  else {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch(max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
+      return `hsl(${Math.round(h*360)}, ${Math.round(s*100)}%, ${Math.round(l*100)}%)`;
     }
-    h /= 6;
-  }
-  h = Math.round(h * 360);
-  s = Math.round(s * 100);
-  l = Math.round(l * 100);
-  return `hsl(${h}, ${s}%, ${l}%)`;
-}
 
-// Función para extraer colores dominantes
-function getDominantColors(ctx, width, height, count) {
-  const imageData = ctx.getImageData(0, 0, width, height);
-  const data = imageData.data;
-  const pixels = [];
-
-  // Muestreamos píxeles para acelerar (cada 10 pixeles)
-  const step = 10;
-  for(let y = 0; y < height; y += step) {
-    for(let x = 0; x < width; x += step) {
-      const i = (y * width + x) * 4;
-      const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
-      if(a > 200) // ignorar transparentes
-        pixels.push([r,g,b]);
+    function extractPalette() {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      let colors = {};
+      for (let i = 0; i < data.length; i += 4) {
+        let rgb = `${data[i]},${data[i+1]},${data[i+2]}`;
+        colors[rgb] = (colors[rgb] || 0) + 1;
+      }
+      const sorted = Object.entries(colors).sort((a,b) => b[1] - a[1]).slice(0, 6);
+      paletteColors.innerHTML = '';
+      sorted.forEach(([rgb]) => {
+        const [r,g,b] = rgb.split(',').map(Number);
+        const hex = rgbToHex(r,g,b);
+        paletteColors.innerHTML += `
+          <div class='color-container' tabindex='0' title='Haz clic para copiar ${hex}'>
+            <div class='color-box' style='background:${hex}'></div>
+            <div class='copiable'>${hex}</div>
+          </div>`;
+      });
+      addCopyListeners();
     }
-  }
 
-  // K-means simple con count clusters
-  let clusters = [];
-  for(let i=0; i<count; i++) {
-    clusters.push(pixels[Math.floor(Math.random()*pixels.length)]);
-  }
-
-  let iterations = 8;
-  while(iterations--) {
-    let groups = Array(count).fill().map(()=>[]);
-    for(let p of pixels) {
-      let distances = clusters.map(c => colorDistance(p, c));
-      let minIndex = distances.indexOf(Math.min(...distances));
-      groups[minIndex].push(p);
+    function generateCombinations(r, g, b) {
+      const lighten = (x) => Math.min(255, x + 40);
+      const darken = (x) => Math.max(0, x - 40);
+      const comp = [255 - r, 255 - g, 255 - b];
+      const combos = [
+        [lighten(r), lighten(g), lighten(b)],
+        [darken(r), darken(g), darken(b)],
+        comp
+      ];
+      comboColors.innerHTML = '';
+      combos.forEach(([rr,gg,bb]) => {
+        const hex = rgbToHex(rr,gg,bb);
+        comboColors.innerHTML += `
+          <div class='color-container' tabindex='0' title='Haz clic para copiar ${hex}'>
+            <div class='color-box' style='background:${hex}'></div>
+            <div class='copiable'>${hex}</div>
+          </div>`;
+      });
+      addCopyListeners();
     }
-    for(let i=0; i<count; i++) {
-      if(groups[i].length === 0) continue;
-      clusters[i] = averageColor(groups[i]);
+
+    function addCopyListeners() {
+      document.querySelectorAll('.copiable').forEach(el => {
+        el.onclick = () => {
+          const text = el.textContent;
+          navigator.clipboard.writeText(text).then(() => {
+            el.style.backgroundColor = '#d1ffd6';
+            setTimeout(() => el.style.backgroundColor = '#f0f0f0', 800);
+          });
+        };
+      });
     }
-  }
-  return clusters.map(c => rgbToHex(Math.round(c[0]), Math.round(c[1]), Math.round(c[2])));
-}
-
-function colorDistance(c1, c2) {
-  return Math.sqrt(
-    (c1[0]-c2[0])**2 + 
-    (c1[1]-c2[1])**2 + 
-    (c1[2]-c2[2])**2
-  );
-}
-
-function averageColor(colors) {
-  const total = colors.length;
-  const avg = colors.reduce((acc, c) => {
-    acc[0]+= c[0];
-    acc[1]+= c[1];
-    acc[2]+= c[2];
-    return acc;
-  }, [0,0,0]);
-  return avg.map(x => x/total);
-}
-
-// Renderizar paleta en el DOM
-function renderPalette(colors) {
-  paletteDiv.innerHTML = "";
-  colors.forEach(hex => {
-    const div = document.createElement('div');
-    div.className = 'palette-color';
-    div.style.backgroundColor = hex;
-    div.title = hex;
-    paletteDiv.appendChild(div);
-  });
-}
-</script>
-
+  </script>
 </body>
 </html>
