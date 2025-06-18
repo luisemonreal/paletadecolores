@@ -1,59 +1,68 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Selector de Color desde Imagen</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(145deg, #f0f2f5, #ffffff);
-      color: #333;
+      font-family: 'Roboto', sans-serif;
+      background-color: #f9f9f9;
       margin: 0;
-      padding: 30px;
+      padding: 0;
     }
-    h1, h3 {
-      color: #2c3e50;
+    header {
+      background-color: #1e73be;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+    p {
+      font-size: 16px;
     }
     input[type="file"] {
-      padding: 10px 15px;
-      background-color: #2c3e50;
+      display: block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #1e73be;
+      color: white;
       border: none;
-      color: #fff;
-      border-radius: 8px;
-      font-weight: bold;
+      border-radius: 5px;
       cursor: pointer;
       transition: background 0.3s ease;
     }
     input[type="file"]:hover {
-      background-color: #1a252f;
+      background-color: #155a96;
     }
     #canvasWrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
       margin-top: 30px;
-      max-width: 500px;
+      justify-content: center;
     }
     canvas {
       border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       background: #fff;
-      display: block;
       max-width: 100%;
-      height: auto;
-      cursor: crosshair;
     }
-    /* Contenedor de columnas para info, paleta y combinaciones */
-    #infoContainer {
-      display: flex;
-      gap: 30px;
+    .section {
       margin-top: 40px;
-      flex-wrap: wrap;
-    }
-    .info, .palette, .harmonies {
-      flex: 1 1 200px;
+      background-color: white;
       padding: 20px;
-      background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-      min-width: 200px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     .color-container {
       display: inline-block;
@@ -69,92 +78,94 @@
     .color-box {
       width: 50px;
       height: 50px;
-      border: 2px solid #ffffff;
       border-radius: 6px;
-      margin-bottom: 6px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      margin-bottom: 5px;
     }
     .copiable {
-      background: #f0f0f0;
-      padding: 3px 8px;
-      border-radius: 5px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      background: #f1f1f1;
+      padding: 3px 6px;
+      border-radius: 4px;
       display: inline-block;
       user-select: all;
     }
     .copiable:hover {
-      background: #e0e0e0;
+      background-color: #e1e1e1;
     }
-    #colorHex, #colorRGB, #colorHSL {
+    .preview-box {
+      display: inline-block;
+      margin: 10px;
+      padding: 20px;
+      border-radius: 8px;
+      font-size: 16px;
       font-weight: bold;
-      margin-bottom: 5px;
-    }
-    /* Modal zoom window styles */
-    #zoomModal {
-      position: fixed;
-      top: 50px;
-      left: 50%;
-      transform: translateX(-50%);
-      border: 2px solid #2c3e50;
-      border-radius: 12px;
-      width: 180px;
-      height: 180px;
-      background: white;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-      display: none;
-      z-index: 1000;
-    }
-    #zoomCanvas {
-      width: 180px;
-      height: 180px;
-      border-radius: 12px;
-      display: block;
+      color: #fff;
     }
   </style>
 </head>
 <body>
-  <h1>Selector de Color desde una Imagen</h1>
-  <p>Sube una imagen, mueve el cursor para ver zoom, haz clic para seleccionar un color y obtener su información.</p>
-  <input type="file" id="upload" accept="image/*" />
+  <header>
+    <h1>Selector de Color desde una Imagen</h1>
+  </header>
+  <main>
+    <p>Sube una imagen, mueve el cursor para hacer zoom, haz clic para seleccionar un color y obtener su información.</p>
+    <input type="file" id="upload" accept="image/*">
 
-  <div id="canvasWrapper">
-    <canvas id="canvas"></canvas>
-  </div>
+    <div id="canvasWrapper">
+      <canvas id="canvas"></canvas>
+      <canvas id="zoom" width="150" height="150"></canvas>
+    </div>
 
-  <div id="zoomModal">
-    <canvas id="zoomCanvas" width="180" height="180"></canvas>
-  </div>
-
-  <div id="infoContainer">
-    <div class="info">
+    <div class="section">
       <p id="colorHex">HEX:</p>
       <p id="colorRGB">RGB:</p>
       <p id="colorHSL">HSL:</p>
     </div>
 
-    <div class="palette">
+    <div class="section">
       <h3>Paleta principal:</h3>
       <div id="paletteColors"></div>
     </div>
 
-    <div class="harmonies">
+    <div class="section">
       <h3>Combinaciones de color:</h3>
       <div id="comboColors"></div>
     </div>
-  </div>
+
+    <div class="section">
+      <h3>Harmonías de color:</h3>
+      <div><strong>Monocromático:</strong></div>
+      <div id="monoColors"></div>
+      <div><strong>Análogo:</strong></div>
+      <div id="analogColors"></div>
+      <div><strong>Triada:</strong></div>
+      <div id="triadColors"></div>
+      <div><strong>Tétrada:</strong></div>
+      <div id="tetradColors"></div>
+    </div>
+
+    <div class="section">
+      <h3>Vista previa en elementos comunes:</h3>
+      <div id="previewElements"></div>
+    </div>
+  </main>
 
   <script>
     const upload = document.getElementById('upload');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const zoomModal = document.getElementById('zoomModal');
-    const zoomCanvas = document.getElementById('zoomCanvas');
+    const zoomCanvas = document.getElementById('zoom');
     const zoomCtx = zoomCanvas.getContext('2d');
     const colorHex = document.getElementById('colorHex');
     const colorRGB = document.getElementById('colorRGB');
     const colorHSL = document.getElementById('colorHSL');
     const paletteColors = document.getElementById('paletteColors');
     const comboColors = document.getElementById('comboColors');
+    const previewElements = document.getElementById('previewElements');
+    const monoColors = document.getElementById('monoColors');
+    const analogColors = document.getElementById('analogColors');
+    const triadColors = document.getElementById('triadColors');
+    const tetradColors = document.getElementById('tetradColors');
 
     let img = new Image();
 
@@ -166,12 +177,11 @@
         img.onload = () => {
           canvas.width = img.width > 500 ? 500 : img.width;
           canvas.height = img.height * (canvas.width / img.width);
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           extractPalette();
-        };
+        }
         img.src = event.target.result;
-      };
+      }
       reader.readAsDataURL(file);
     });
 
@@ -179,21 +189,8 @@
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-
-      zoomModal.style.display = 'block';
-
-      const zoomSize = 20;
-
-      let sx = Math.min(Math.max(0, x - zoomSize/2), canvas.width - zoomSize);
-      let sy = Math.min(Math.max(0, y - zoomSize/2), canvas.height - zoomSize);
-
       zoomCtx.clearRect(0, 0, zoomCanvas.width, zoomCanvas.height);
-      zoomCtx.imageSmoothingEnabled = false;
-      zoomCtx.drawImage(canvas, sx, sy, zoomSize, zoomSize, 0, 0, zoomCanvas.width, zoomCanvas.height);
-    });
-
-    canvas.addEventListener('mouseleave', () => {
-      zoomModal.style.display = 'none';
+      zoomCtx.drawImage(canvas, x - 10, y - 10, 20, 20, 0, 0, 150, 150);
     });
 
     canvas.addEventListener('click', (e) => {
@@ -205,12 +202,13 @@
       const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
       const hsl = rgbToHsl(pixel[0], pixel[1], pixel[2]);
 
-      colorHex.innerHTML = `HEX: <span class='copiable' tabindex='0' title='Haz clic para copiar'>${hex}</span>`;
-      colorRGB.innerHTML = `RGB: <span class='copiable' tabindex='0' title='Haz clic para copiar'>${rgb}</span>`;
-      colorHSL.innerHTML = `HSL: <span class='copiable' tabindex='0' title='Haz clic para copiar'>${hsl}</span>`;
+      colorHex.innerHTML = `HEX: <span class='copiable'>${hex}</span>`;
+      colorRGB.innerHTML = `RGB: <span class='copiable'>${rgb}</span>`;
+      colorHSL.innerHTML = `HSL: <span class='copiable'>${hsl}</span>`;
 
       generateCombinations(pixel[0], pixel[1], pixel[2]);
-      addCopyListeners();
+      showPreviews(hex);
+      generateHarmonies(pixel[0], pixel[1], pixel[2]);
     });
 
     function rgbToHex(r, g, b) {
@@ -218,15 +216,14 @@
     }
 
     function rgbToHsl(r, g, b) {
-      r /= 255; g /= 255; b /= 255;
+      r /= 255, g /= 255, b /= 255;
       let max = Math.max(r, g, b), min = Math.min(r, g, b);
       let h, s, l = (max + min) / 2;
-      if (max == min) {
-        h = s = 0;
-      } else {
+      if (max == min) h = s = 0;
+      else {
         let d = max - min;
         s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch(max) {
+        switch(max){
           case r: h = (g - b) / d + (g < b ? 6 : 0); break;
           case g: h = (b - r) / d + 2; break;
           case b: h = (r - g) / d + 4; break;
@@ -249,13 +246,8 @@
       sorted.forEach(([rgb]) => {
         const [r,g,b] = rgb.split(',').map(Number);
         const hex = rgbToHex(r,g,b);
-        paletteColors.innerHTML += `
-          <div class='color-container' tabindex='0' title='Haz clic para copiar ${hex}'>
-            <div class='color-box' style='background:${hex}'></div>
-            <div class='copiable'>${hex}</div>
-          </div>`;
+        paletteColors.innerHTML += `<div class='color-container'><div class='color-box' style='background:${hex}'></div><div class='copiable'>${hex}</div></div>`;
       });
-      addCopyListeners();
     }
 
     function generateCombinations(r, g, b) {
@@ -270,26 +262,37 @@
       comboColors.innerHTML = '';
       combos.forEach(([rr,gg,bb]) => {
         const hex = rgbToHex(rr,gg,bb);
-        comboColors.innerHTML += `
-          <div class='color-container' tabindex='0' title='Haz clic para copiar ${hex}'>
-            <div class='color-box' style='background:${hex}'></div>
-            <div class='copiable'>${hex}</div>
-          </div>`;
+        comboColors.innerHTML += `<div class='color-container'><div class='color-box' style='background:${hex}'></div><div class='copiable'>${hex}</div></div>`;
       });
-      addCopyListeners();
     }
 
-    function addCopyListeners() {
-      document.querySelectorAll('.copiable').forEach(el => {
-        el.onclick = () => {
-          const text = el.textContent;
-          navigator.clipboard.writeText(text).then(() => {
-            el.style.backgroundColor = '#d1ffd6';
-            setTimeout(() => el.style.backgroundColor = '#f0f0f0', 800);
-          });
-        };
-      });
+    function generateHarmonies(r, g, b) {
+      function show(colors, container) {
+        container.innerHTML = '';
+        colors.forEach(([rr, gg, bb]) => {
+          const hex = rgbToHex(rr, gg, bb);
+          container.innerHTML += `<div class='color-container'><div class='color-box' style='background:${hex}'></div><div class='copiable'>${hex}</div></div>`;
+        });
+      }
+      const mono = [[r, g, b], [r+20, g+20, b+20], [r-20, g-20, b-20]];
+      const analog = [[r, g+30, b], [r, g, b], [r, g, b+30]];
+      const triad = [[r, g, b], [b, r, g], [g, b, r]];
+      const tetrad = [[r, g, b], [255-r, g, b], [r, 255-g, b], [r, g, 255-b]];
+
+      show(mono, monoColors);
+      show(analog, analogColors);
+      show(triad, triadColors);
+      show(tetrad, tetradColors);
+    }
+
+    function showPreviews(hexColor) {
+      previewElements.innerHTML = `
+        <div class="preview-box" style="background-color: ${hexColor}">Botón</div>
+        <div class="preview-box" style="background-color: ${hexColor}; color: #000">Texto sobre fondo</div>
+        <div class="preview-box" style="background: linear-gradient(45deg, ${hexColor}, #ffffff)">Banner</div>
+      `;
     }
   </script>
 </body>
 </html>
+
