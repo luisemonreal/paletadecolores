@@ -138,6 +138,26 @@
       </div>
     </div>
 
+    <!-- NUEVO: Vistas filtradas -->
+    <div class="section">
+      <h3>Vistas con Filtros</h3>
+      <p class="instruction">Variaciones de la imagen cargada con diferentes filtros: escala de grises, contraste alto e inversión de colores.</p>
+      <div id="filteredViews" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+        <div>
+          <strong>Escala de Grises</strong><br />
+          <canvas id="grayscaleCanvas" width="300" style="max-width: 100%; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);"></canvas>
+        </div>
+        <div>
+          <strong>Contraste Aumentado</strong><br />
+          <canvas id="contrastCanvas" width="300" style="max-width: 100%; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);"></canvas>
+        </div>
+        <div>
+          <strong>Inversión de Colores</strong><br />
+          <canvas id="invertCanvas" width="300" style="max-width: 100%; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);"></canvas>
+        </div>
+      </div>
+    </div>
+
     <div class="section">
       <h3>Información del Color Seleccionado</h3>
       <p class="instruction">Al hacer clic en la imagen, verás aquí los códigos del color seleccionado. Puedes copiar cualquiera de ellos haciendo clic en el texto correspondiente.</p>
@@ -212,6 +232,7 @@
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           extractPalette();
           extractVibrant(img);
+          generateFilteredViews();
           message.textContent = 'Procesamiento completo.';
         };
         img.onerror = () => {
@@ -382,8 +403,68 @@
           console.error(err);
         });
     }
+
+    // NUEVA FUNCIÓN para vistas filtradas
+    function generateFilteredViews() {
+      const width = canvas.width;
+      const height = canvas.height;
+
+      const grayscaleCanvas = document.getElementById('grayscaleCanvas');
+      const contrastCanvas = document.getElementById('contrastCanvas');
+      const invertCanvas = document.getElementById('invertCanvas');
+
+      grayscaleCanvas.width = width;
+      grayscaleCanvas.height = height;
+      contrastCanvas.width = width;
+      contrastCanvas.height = height;
+      invertCanvas.width = width;
+      invertCanvas.height = height;
+
+      const gsCtx = grayscaleCanvas.getContext('2d');
+      const ctCtx = contrastCanvas.getContext('2d');
+      const invCtx = invertCanvas.getContext('2d');
+
+      // Obtener datos originales
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+
+      // Escala de grises
+      const grayData = new Uint8ClampedArray(data);
+      for (let i = 0; i < grayData.length; i += 4) {
+        const r = grayData[i];
+        const g = grayData[i + 1];
+        const b = grayData[i + 2];
+        // luminancia
+        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+        grayData[i] = grayData[i + 1] = grayData[i + 2] = gray;
+      }
+      const grayImageData = new ImageData(grayData, width, height);
+      gsCtx.putImageData(grayImageData, 0, 0);
+
+      // Contraste aumentado (simple aumento de contraste)
+      const contrastData = new Uint8ClampedArray(data);
+      const contrastFactor = 1.5;
+      for (let i = 0; i < contrastData.length; i += 4) {
+        for(let j=0; j<3; j++) {
+          let color = contrastData[i + j];
+          color = ((color - 128) * contrastFactor) + 128;
+          contrastData[i + j] = Math.min(255, Math.max(0, color));
+        }
+      }
+      const contrastImageData = new ImageData(contrastData, width, height);
+      ctCtx.putImageData(contrastImageData, 0, 0);
+
+      // Inversión de colores
+      const invertData = new Uint8ClampedArray(data);
+      for (let i = 0; i < invertData.length; i += 4) {
+        invertData[i] = 255 - invertData[i];       // R
+        invertData[i + 1] = 255 - invertData[i + 1]; // G
+        invertData[i + 2] = 255 - invertData[i + 2]; // B
+      }
+      const invertImageData = new ImageData(invertData, width, height);
+      invCtx.putImageData(invertImageData, 0, 0);
+    }
   </script>
 </body>
 </html>
-
 
