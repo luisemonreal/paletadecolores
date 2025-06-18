@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Selector de Color desde Imagen</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/node-vibrant@3.1.6/dist/vibrant.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
   <style>
     body {
       font-family: 'Roboto', sans-serif;
       background-color: #f9f9f9;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
     header {
       background-color: #1e73be;
@@ -20,19 +24,13 @@
     }
     main {
       max-width: 1200px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
-    h1 {
-      margin: 0;
-      font-size: 28px;
-    }
-    p {
-      font-size: 16px;
+      margin: 20px auto 60px;
+      padding: 0 20px;
+      flex-grow: 1;
     }
     input[type="file"] {
       display: block;
-      margin-top: 20px;
+      margin-top: 10px;
       padding: 10px 20px;
       background-color: #1e73be;
       color: white;
@@ -40,6 +38,7 @@
       border-radius: 5px;
       cursor: pointer;
       transition: background 0.3s ease;
+      font-size: 16px;
     }
     input[type="file"]:hover {
       background-color: #155a96;
@@ -92,14 +91,24 @@
     .copiable:hover {
       background-color: #e1e1e1;
     }
-    .preview-box {
-      display: inline-block;
-      margin: 10px;
-      padding: 20px;
-      border-radius: 8px;
-      font-size: 16px;
+    #message {
+      margin-top: 20px;
       font-weight: bold;
-      color: #fff;
+      color: #444;
+    }
+    footer {
+      text-align: center;
+      padding: 15px 10px;
+      background-color: #1e73be;
+      color: white;
+      font-size: 14px;
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+    }
+    p.instruction {
+      font-size: 14px;
+      color: #555;
+      margin-top: 5px;
+      max-width: 850px;
     }
   </style>
 </head>
@@ -108,47 +117,63 @@
     <h1>Selector de Color desde una Imagen</h1>
   </header>
   <main>
-    <p>Sube una imagen, mueve el cursor para hacer zoom, haz clic para seleccionar un color y obtener su información.</p>
-    <input type="file" id="upload" accept="image/*">
+    <p>Sube una imagen para analizar sus colores, hacer zoom en la imagen y seleccionar colores con precisión.</p>
+
+    <label for="upload"><strong>Subir Imagen</strong></label>
+    <input type="file" id="upload" accept="image/*" />
+    <p class="instruction">Selecciona una imagen desde tu dispositivo. La imagen se mostrará en el área principal escalada para facilitar la visualización y el análisis.</p>
+
+    <div id="message"></div>
 
     <div id="canvasWrapper">
-      <canvas id="canvas"></canvas>
-      <canvas id="zoom" width="150" height="150"></canvas>
+      <div>
+        <strong>Imagen Principal</strong>
+        <canvas id="canvas" title="Imagen cargada para selección de colores"></canvas>
+        <p class="instruction" style="max-width: 500px;">Esta es la imagen cargada. Mueve el cursor sobre ella para ver el zoom en la ventana derecha y haz clic para seleccionar un color específico.</p>
+      </div>
+      <div>
+        <strong>Zoom Detallado</strong>
+        <canvas id="zoom" width="150" height="150" title="Zoom ampliado alrededor del cursor"></canvas>
+        <p class="instruction" style="max-width: 150px;">Zona ampliada alrededor del cursor para facilitar la selección precisa del color.</p>
+      </div>
     </div>
 
     <div class="section">
+      <h3>Información del Color Seleccionado</h3>
+      <p class="instruction">Al hacer clic en la imagen, verás aquí los códigos del color seleccionado. Puedes copiar cualquiera de ellos haciendo clic en el texto correspondiente.</p>
       <p id="colorHex">HEX:</p>
       <p id="colorRGB">RGB:</p>
       <p id="colorHSL">HSL:</p>
     </div>
 
     <div class="section">
-      <h3>Paleta principal:</h3>
+      <h3>Paleta Principal (Manual)</h3>
+      <p class="instruction">Esta sección muestra los colores predominantes detectados en la imagen, calculados manualmente contando píxeles similares. Cada color muestra su código hexadecimal para copiar.</p>
       <div id="paletteColors"></div>
     </div>
 
     <div class="section">
-      <h3>Combinaciones de color:</h3>
-      <div id="comboColors"></div>
+      <h3>Proporción de Colores</h3>
+      <p class="instruction">Gráfica que muestra la proporción en porcentaje de cada color predominante detectado en la imagen. Útil para entender la distribución visual del color.</p>
+      <canvas id="colorChart" width="600" height="300" title="Gráfica de proporción de colores"></canvas>
     </div>
 
     <div class="section">
-      <h3>Harmonías de color:</h3>
-      <div><strong>Monocromático:</strong></div>
-      <div id="monoColors"></div>
-      <div><strong>Análogo:</strong></div>
-      <div id="analogColors"></div>
-      <div><strong>Triada:</strong></div>
-      <div id="triadColors"></div>
-      <div><strong>Tétrada:</strong></div>
-      <div id="tetradColors"></div>
+      <h3>Colores según Vibrant.js</h3>
+      <p class="instruction">Colores extraídos usando la librería Vibrant.js, que identifica tonos clave en la imagen como vibrante, oscuro, claro, entre otros.</p>
+      <div id="vibrantColors"></div>
     </div>
 
     <div class="section">
-      <h3>Vista previa en elementos comunes:</h3>
-      <div id="previewElements"></div>
+      <h3>Imagen Segmentada por Color</h3>
+      <p class="instruction">Esta imagen muestra la segmentación de la imagen original, donde cada píxel se reemplaza por el color predominante más cercano para resaltar las zonas principales de color.</p>
+      <canvas id="segmented" width="500" title="Imagen segmentada por colores principales"></canvas>
     </div>
   </main>
+
+  <footer>
+    Desarrollado por Luis Eduardo Monreal
+  </footer>
 
   <script>
     const upload = document.getElementById('upload');
@@ -156,32 +181,45 @@
     const ctx = canvas.getContext('2d');
     const zoomCanvas = document.getElementById('zoom');
     const zoomCtx = zoomCanvas.getContext('2d');
+    const segmentedCanvas = document.getElementById('segmented');
+    const segmentedCtx = segmentedCanvas.getContext('2d');
     const colorHex = document.getElementById('colorHex');
     const colorRGB = document.getElementById('colorRGB');
     const colorHSL = document.getElementById('colorHSL');
     const paletteColors = document.getElementById('paletteColors');
-    const comboColors = document.getElementById('comboColors');
-    const previewElements = document.getElementById('previewElements');
-    const monoColors = document.getElementById('monoColors');
-    const analogColors = document.getElementById('analogColors');
-    const triadColors = document.getElementById('triadColors');
-    const tetradColors = document.getElementById('tetradColors');
-
+    const colorChart = document.getElementById('colorChart');
+    const vibrantColors = document.getElementById('vibrantColors');
+    const message = document.getElementById('message');
+    let chartInstance = null;
     let img = new Image();
 
     upload.addEventListener('change', (e) => {
+      message.textContent = 'Cargando imagen...';
       const file = e.target.files[0];
-      if (!file) return;
+      if (!file) {
+        message.textContent = 'No se seleccionó ninguna imagen.';
+        return;
+      }
       const reader = new FileReader();
       reader.onload = function(event) {
         img.onload = () => {
+          message.textContent = 'Imagen cargada, procesando...';
           canvas.width = img.width > 500 ? 500 : img.width;
           canvas.height = img.height * (canvas.width / img.width);
+          segmentedCanvas.width = canvas.width;
+          segmentedCanvas.height = canvas.height;
+          ctx.clearRect(0,0,canvas.width,canvas.height);
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           extractPalette();
-        }
+          extractVibrant(img);
+          message.textContent = 'Procesamiento completo.';
+        };
+        img.onerror = () => {
+          message.textContent = 'Error al cargar la imagen.';
+          console.error('Error al cargar la imagen.');
+        };
         img.src = event.target.result;
-      }
+      };
       reader.readAsDataURL(file);
     });
 
@@ -202,97 +240,137 @@
       const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
       const hsl = rgbToHsl(pixel[0], pixel[1], pixel[2]);
 
-      colorHex.innerHTML = `HEX: <span class='copiable'>${hex}</span>`;
-      colorRGB.innerHTML = `RGB: <span class='copiable'>${rgb}</span>`;
-      colorHSL.innerHTML = `HSL: <span class='copiable'>${hsl}</span>`;
-
-      generateCombinations(pixel[0], pixel[1], pixel[2]);
-      showPreviews(hex);
-      generateHarmonies(pixel[0], pixel[1], pixel[2]);
+      colorHex.innerHTML = `HEX: <span class='copiable' title="Haz clic para copiar">${hex}</span>`;
+      colorRGB.innerHTML = `RGB: <span class='copiable' title="Haz clic para copiar">${rgb}</span>`;
+      colorHSL.innerHTML = `HSL: <span class='copiable' title="Haz clic para copiar">${hsl}</span>`;
     });
 
-    function rgbToHex(r, g, b) {
-      return "#" + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+    // Función para copiar texto al portapapeles al hacer clic en código de color
+    document.body.addEventListener('click', (e) => {
+      if(e.target.classList.contains('copiable')){
+        const text = e.target.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          alert(`Copiado: ${text}`);
+        }).catch(() => {
+          alert('No se pudo copiar el texto.');
+        });
+      }
+    });
+
+    function rgbToHex(r,g,b){
+      return "#" + [r,g,b].map(x => x.toString(16).padStart(2,'0')).join('');
     }
 
-    function rgbToHsl(r, g, b) {
-      r /= 255, g /= 255, b /= 255;
-      let max = Math.max(r, g, b), min = Math.min(r, g, b);
-      let h, s, l = (max + min) / 2;
-      if (max == min) h = s = 0;
+    function rgbToHsl(r,g,b){
+      r/=255; g/=255; b/=255;
+      let max = Math.max(r,g,b), min = Math.min(r,g,b);
+      let h,s,l = (max+min)/2;
+      if(max === min) h=s=0;
       else {
         let d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        s = l > 0.5 ? d/(2 - max - min) : d/(max+min);
         switch(max){
-          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-          case g: h = (b - r) / d + 2; break;
-          case b: h = (r - g) / d + 4; break;
+          case r: h = (g-b)/d + (g < b ? 6 : 0); break;
+          case g: h = (b-r)/d + 2; break;
+          case b: h = (r-g)/d + 4; break;
         }
         h /= 6;
       }
       return `hsl(${Math.round(h*360)}, ${Math.round(s*100)}%, ${Math.round(l*100)}%)`;
     }
 
-    function extractPalette() {
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    function extractPalette(){
+      const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
       const data = imageData.data;
       let colors = {};
-      for (let i = 0; i < data.length; i += 4) {
-        let rgb = `${data[i]},${data[i+1]},${data[i+2]}`;
-        colors[rgb] = (colors[rgb] || 0) + 1;
+      for(let i=0; i<data.length; i+=4){
+        let r = data[i], g = data[i+1], b = data[i+2];
+        let key = `${r},${g},${b}`;
+        colors[key] = (colors[key] || 0) + 1;
       }
-      const sorted = Object.entries(colors).sort((a,b) => b[1] - a[1]).slice(0, 6);
+      const sorted = Object.entries(colors).sort((a,b) => b[1] - a[1]).slice(0,8);
       paletteColors.innerHTML = '';
-      sorted.forEach(([rgb]) => {
+      const labels = [], values = [], bgColors = [], topColors = [];
+      sorted.forEach(([rgb,count])=>{
         const [r,g,b] = rgb.split(',').map(Number);
         const hex = rgbToHex(r,g,b);
-        paletteColors.innerHTML += `<div class='color-container'><div class='color-box' style='background:${hex}'></div><div class='copiable'>${hex}</div></div>`;
+        labels.push(hex);
+        values.push(count);
+        bgColors.push(hex);
+        topColors.push({r,g,b});
+        paletteColors.innerHTML += `<div class='color-container' title="Haz clic para copiar el código"><div class='color-box' style='background:${hex}'></div><div class='copiable'>${hex}</div></div>`;
       });
-    }
 
-    function generateCombinations(r, g, b) {
-      const lighten = (x) => Math.min(255, x + 40);
-      const darken = (x) => Math.max(0, x - 40);
-      const comp = [255 - r, 255 - g, 255 - b];
-      const combos = [
-        [lighten(r), lighten(g), lighten(b)],
-        [darken(r), darken(g), darken(b)],
-        comp
-      ];
-      comboColors.innerHTML = '';
-      combos.forEach(([rr,gg,bb]) => {
-        const hex = rgbToHex(rr,gg,bb);
-        comboColors.innerHTML += `<div class='color-container'><div class='color-box' style='background:${hex}'></div><div class='copiable'>${hex}</div></div>`;
+      if(chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(colorChart, {
+        type:'bar',
+        data:{
+          labels: labels,
+          datasets: [{
+            label: 'Proporción de colores',
+            data: values,
+            backgroundColor: bgColors
+          }]
+        },
+        options:{
+          plugins:{legend:{display:false}},
+          scales:{
+            y:{
+              beginAtZero:true,
+              ticks:{
+                callback: val => `${Math.round((val / values.reduce((a,b)=>a+b)) * 100)}%`
+              }
+            }
+          }
+        }
       });
-    }
 
-    function generateHarmonies(r, g, b) {
-      function show(colors, container) {
-        container.innerHTML = '';
-        colors.forEach(([rr, gg, bb]) => {
-          const hex = rgbToHex(rr, gg, bb);
-          container.innerHTML += `<div class='color-container'><div class='color-box' style='background:${hex}'></div><div class='copiable'>${hex}</div></div>`;
-        });
+      // Imagen segmentada:
+      const newImageData = segmentedCtx.createImageData(canvas.width, canvas.height);
+      const originalData = data;
+      for(let i=0; i<originalData.length; i+=4){
+        const r = originalData[i], g = originalData[i+1], b = originalData[i+2];
+        let closest = topColors[0];
+        let minDist = Math.hypot(r - closest.r, g - closest.g, b - closest.b);
+        for(let c=1; c<topColors.length; c++){
+          const dist = Math.hypot(r - topColors[c].r, g - topColors[c].g, b - topColors[c].b);
+          if(dist < minDist){
+            minDist = dist;
+            closest = topColors[c];
+          }
+        }
+        newImageData.data[i] = closest.r;
+        newImageData.data[i+1] = closest.g;
+        newImageData.data[i+2] = closest.b;
+        newImageData.data[i+3] = 255;
       }
-      const mono = [[r, g, b], [r+20, g+20, b+20], [r-20, g-20, b-20]];
-      const analog = [[r, g+30, b], [r, g, b], [r, g, b+30]];
-      const triad = [[r, g, b], [b, r, g], [g, b, r]];
-      const tetrad = [[r, g, b], [255-r, g, b], [r, 255-g, b], [r, g, 255-b]];
-
-      show(mono, monoColors);
-      show(analog, analogColors);
-      show(triad, triadColors);
-      show(tetrad, tetradColors);
+      segmentedCtx.putImageData(newImageData, 0, 0);
     }
 
-    function showPreviews(hexColor) {
-      previewElements.innerHTML = `
-        <div class="preview-box" style="background-color: ${hexColor}">Botón</div>
-        <div class="preview-box" style="background-color: ${hexColor}; color: #000">Texto sobre fondo</div>
-        <div class="preview-box" style="background: linear-gradient(45deg, ${hexColor}, #ffffff)">Banner</div>
-      `;
+    function extractVibrant(image){
+      vibrantColors.innerHTML = 'Cargando colores...';
+      Vibrant.from(image).getPalette()
+        .then(palette => {
+          vibrantColors.innerHTML = '';
+          for(const swatch in palette){
+            if(palette[swatch]){
+              const hex = palette[swatch].getHex();
+              vibrantColors.innerHTML += `
+                <div class='color-container' title="Haz clic para copiar el código">
+                  <div class='color-box' style='background:${hex}'></div>
+                  <div class='copiable'>${swatch}: ${hex}</div>
+                </div>
+              `;
+            }
+          }
+        })
+        .catch(err => {
+          vibrantColors.innerHTML = 'Error cargando colores con Vibrant.js';
+          console.error(err);
+        });
     }
   </script>
 </body>
 </html>
+
 
