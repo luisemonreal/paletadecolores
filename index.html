@@ -284,10 +284,23 @@
       const data = imageData.data;
       let colors = {};
       for(let i=0; i<data.length; i+=4){
+        const alpha = data[i+3];
+        if(alpha === 0) continue; // Ignorar píxeles transparentes
         let r = data[i], g = data[i+1], b = data[i+2];
+
+        // Ignorar colores muy oscuros (brillo bajo)
+        const brightness = (r*299 + g*587 + b*114) / 1000;
+        if(brightness < 10) continue;
+
+        // Agrupar colores similares redondeando a múltiplos de 10
+        r = Math.round(r / 10) * 10;
+        g = Math.round(g / 10) * 10;
+        b = Math.round(b / 10) * 10;
+
         let key = `${r},${g},${b}`;
         colors[key] = (colors[key] || 0) + 1;
       }
+
       const sorted = Object.entries(colors).sort((a,b) => b[1] - a[1]).slice(0,8);
       paletteColors.innerHTML = '';
       const labels = [], values = [], bgColors = [], topColors = [];
@@ -325,7 +338,7 @@
         }
       });
 
-      // Imagen segmentada:
+      // Imagen segmentada
       const newImageData = segmentedCtx.createImageData(canvas.width, canvas.height);
       const originalData = data;
       for(let i=0; i<originalData.length; i+=4){
